@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clube do Game - Descobrir</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'media',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Segoe UI"', 'Roboto', 'sans-serif']
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out'
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: 0, transform: 'translateY(8px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col items-center py-10 font-sans transition-colors duration-300">
+
+  <h1 class="text-3xl sm:text-4xl font-extrabold mb-6 text-center tracking-tight">
+    🎮 <span class="text-indigo-600 dark:text-indigo-400">Clube do Game</span>
+  </h1>
+
+  <form id="filtros" class="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-6 w-full max-w-xl space-y-4 transition-all duration-300 text-sm sm:text-base">
+    <div>
+      <label class="font-semibold block mb-1">Plataforma:</label>
+      <select name="platform" id="platform-select" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white transition">
+        <option value="">Qualquer</option>
+      </select>
+    </div>
+
+    <div class="flex gap-4 flex-col sm:flex-row">
+      <div class="flex-1">
+        <label class="font-semibold block mb-1">Ano de:</label>
+        <input type="number" name="year_from" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white" />
+      </div>
+      <div class="flex-1">
+        <label class="font-semibold block mb-1">até:</label>
+        <input type="number" name="year_to" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white" />
+      </div>
+    </div>
+
+    <div>
+      <label class="font-semibold block mb-1">Gênero:</label>
+      <select name="genre" id="genre-select" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white">
+        <option value="">Qualquer</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="font-semibold block mb-1">Nota mínima (Metacritic):</label>
+      <input type="number" name="rating" min="0" max="100" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white" />
+    </div>
+
+    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-md hover:bg-indigo-700 transition duration-300">
+      Descobrir um jogo!
+    </button>
+  </form>
+
+  <div id="resultado" class="mt-10 w-full max-w-xl px-2"></div>
+
+  <div id="loading" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+    <div class="flex flex-col items-center gap-2 text-white">
+      <svg class="animate-spin h-8 w-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+      <p class="text-sm">Buscando jogo...</p>
+    </div>
+  </div>
+
+  <script>
+    let ultimosFiltros = null;
+
+    async function carregarFiltros() {
+      const plataformaRes = await fetch('/plataformas');
+      const plataformas = await plataformaRes.json();
+
+      const generoRes = await fetch('/generos');
+      const generos = await generoRes.json();
+
+      const plataformaSelect = document.getElementById('platform-select');
+      plataformas.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        plataformaSelect.appendChild(opt);
+      });
+
+      const generoSelect = document.getElementById('genre-select');
+      generos.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.slug;
+        opt.textContent = g.name;
+        generoSelect.appendChild(opt);
+      });
+    }
+
+    async function buscarJogo(formData = null) {
+      const botao = document.querySelector("button[type='submit']");
+      const loading = document.getElementById('loading');
+      botao.disabled = true;
+      botao.textContent = 'Carregando...';
+      loading.classList.remove('hidden');
+
+      const res = await fetch('/buscar', {
+        method: 'POST',
+        body: formData || ultimosFiltros
+      });
+
+      const data = await res.json();
+      const container = document.getElementById('resultado');
+      container.innerHTML = '';
+      botao.disabled = false;
+      botao.textContent = 'Descobrir um jogo!';
+      loading.classList.add('hidden');
+
+      if (data.erro) {
+        container.innerHTML = `<p class="text-red-500 font-semibold">${data.erro}</p>`;
+        return;
+      }
+
+      let verMaisHTML = '';
+      if (data.slug) {
+        verMaisHTML = `<p><a href="https://rawg.io/games/${data.slug}" target="_blank" class="text-indigo-500 underline">Ver mais no RAWG</a></p>`;
+      }
+
+      container.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 space-y-4 animate-fade-in">
+          <h2 class="text-2xl font-bold">${data.nome}</h2>
+          <img src="${data.imagem}" alt="Imagem do jogo" class="rounded-lg w-full max-h-80 object-cover shadow-md transition hover:scale-[1.02]" />
+          <p><strong>🎯 Metacritic:</strong> ${data.nota}</p>
+          <p><strong>📅 Lançamento:</strong> ${data.data}</p>
+          <p><strong>🏢 Desenvolvedora:</strong> ${data.desenvolvedora}</p>
+          <p><strong>🎮 Plataformas:</strong> ${data.plataformas.map(p => `<span class="inline-block bg-indigo-100 text-indigo-800 dark:bg-indigo-800 dark:text-white px-2 py-1 rounded text-sm mr-2">${p}</span>`).join('')}</p>
+          <p><strong>🏷️ Gêneros:</strong> ${data.generos.map(g => `<span class="inline-block bg-gray-200 dark:bg-gray-700 dark:text-white px-2 py-1 rounded text-sm mr-2">${g}</span>`).join('')}</p>
+          ${verMaisHTML}
+          ${data.screenshots && data.screenshots.length ? `
+            <div>
+              <h3 class="font-semibold mt-4 mb-2">📸 Screenshots:</h3>
+              <div class="grid grid-cols-2 gap-2">
+                ${data.screenshots.map(img => `<img src="${img}" class="rounded-lg shadow hover:scale-105 transition duration-300">`).join('')}
+              </div>
+            </div>
+          ` : ''}
+          <button id="tentarOutro" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition">
+            Tentar outro
+          </button>
+        </div>
+      `;
+
+      document.getElementById('tentarOutro').addEventListener('click', () => {
+        buscarJogo();
+      });
+    }
+
+    document.getElementById('filtros').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      ultimosFiltros = formData;
+      buscarJogo(formData);
+    });
+
+    carregarFiltros();
+  </script>
+</body>
+</html>

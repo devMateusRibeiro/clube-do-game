@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clube de Game</title>
+  <title>Clube do Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -12,139 +12,57 @@
         extend: {
           fontFamily: {
             sans: ['"Segoe UI"', 'Roboto', 'sans-serif']
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.6s ease-out both'
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: 0, transform: 'translateY(12px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' }
+            }
           }
         }
       }
     }
   </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col items-center py-10 font-sans transition-colors duration-300">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans min-h-screen flex flex-col items-center px-4 py-10">
 
-  <h1 class="text-4xl font-extrabold mb-8 text-center tracking-tight">
-    🎮 <span class="text-indigo-600 dark:text-indigo-400">Clube de Game</span>
-  </h1>
+  <main class="max-w-3xl w-full text-center space-y-10 animate-fade-in">
+    <h1 class="text-5xl font-extrabold tracking-tight">
+      🎮 <span class="text-indigo-600 dark:text-indigo-400">Clube do Game</span>
+    </h1>
+    <p class="text-lg text-gray-700 dark:text-gray-300">
+      Descubra jogos incríveis de forma aleatória com base em seus gostos. Use filtros, veja screenshots e conheça novas aventuras.
+    </p>
 
-  <form id="filtros" class="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-6 w-full max-w-xl space-y-4 transition-all duration-300">
-    <div>
-      <label class="font-semibold block mb-1">Plataforma:</label>
-      <select name="platform" id="platform-select" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white transition">
-        <option value="">Qualquer</option>
-      </select>
-    </div>
+    <a href="/descobrir" class="inline-block bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-indigo-700 transition duration-300 hover:scale-105">
+      🔍 Descobrir um Jogo Agora
+    </a>
 
-    <div class="flex gap-4">
-      <div class="flex-1">
-        <label class="font-semibold block mb-1">Ano de:</label>
-        <input type="number" name="year_from" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white" />
-      </div>
-      <div class="flex-1">
-        <label class="font-semibold block mb-1">até:</label>
-        <input type="number" name="year_to" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white" />
-      </div>
-    </div>
+    <section class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left space-y-2">
+      <h2 class="text-2xl font-bold mb-2">📘 Sobre o Projeto</h2>
+      <p class="text-gray-700 dark:text-gray-300">
+        O <strong>Clube de Game</strong> é um site que conecta você à <strong>RAWG API</strong>, uma das maiores bases de dados de jogos do mundo. A ideia é simples: você escolhe seus filtros (ou deixa tudo em aberto) e recebe uma recomendação aleatória com imagens, nota, plataformas e mais.
+      </p>
+    </section>
 
-    <div>
-      <label class="font-semibold block mb-1">Gênero:</label>
-      <select name="genre" id="genre-select" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white">
-        <option value="">Qualquer</option>
-      </select>
-    </div>
+    <section class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 text-left space-y-2">
+      <h2 class="text-2xl font-bold mb-2">⚙️ Tecnologias Utilizadas</h2>
+      <ul class="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1">
+        <li>Python + Flask (backend)</li>
+        <li>Tailwind CSS (estilo responsivo)</li>
+        <li>RAWG API (dados dos jogos)</li>
+        <li>JavaScript moderno (UX dinâmica)</li>
+      </ul>
+    </section>
 
-    <div>
-      <label class="font-semibold block mb-1">Nota mínima (Metacritic):</label>
-      <input type="number" name="rating" min="0" max="100" class="w-full p-2 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white" />
-    </div>
+    <footer class="text-center text-sm text-gray-500 dark:text-gray-400 mt-10">
+      © 2025 Clube do Game • Feito com 💜 por um(a) dev apaixonado(a)
+      <!-- <br><a href="https://github.com/seuprojeto" class="underline">Ver no GitHub</a> -->
+    </footer>
+  </main>
 
-    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-md hover:bg-indigo-700 transition duration-300">
-      Descobrir um jogo!
-    </button>
-  </form>
-
-  <div id="resultado" class="mt-10 w-full max-w-xl px-2"></div>
-
-  <script>
-    let ultimosFiltros = null;
-
-    async function carregarFiltros() {
-      const plataformaRes = await fetch('/plataformas');
-      const plataformas = await plataformaRes.json();
-
-      const generoRes = await fetch('/generos');
-      const generos = await generoRes.json();
-
-      const plataformaSelect = document.getElementById('platform-select');
-      plataformas.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.name;
-        plataformaSelect.appendChild(opt);
-      });
-
-      const generoSelect = document.getElementById('genre-select');
-      generos.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g.slug;
-        opt.textContent = g.name;
-        generoSelect.appendChild(opt);
-      });
-    }
-
-    async function buscarJogo(formData = null) {
-      const res = await fetch('/buscar', {
-        method: 'POST',
-        body: formData || ultimosFiltros
-      });
-
-      const data = await res.json();
-      const container = document.getElementById('resultado');
-      container.innerHTML = '';
-
-      if (data.erro) {
-        container.innerHTML = `<p class="text-red-500 font-semibold">${data.erro}</p>`;
-      } else {
-        let verMaisHTML = '';
-        if (data.slug) {
-          verMaisHTML = `<p><a href="https://rawg.io/games/${data.slug}" target="_blank" class="text-indigo-500 underline">Ver mais no RAWG</a></p>`;
-        }
-
-        container.innerHTML = `
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 space-y-4 animate-fade-in">
-            <h2 class="text-2xl font-bold">${data.nome}</h2>
-            <img src="${data.imagem}" alt="Imagem do jogo" class="rounded-lg w-full max-h-80 object-cover shadow-md transition hover:scale-[1.02]" />
-            <p><strong>🎯 Metacritic:</strong> ${data.nota}</p>
-            <p><strong>📅 Lançamento:</strong> ${data.data}</p>
-            <p><strong>🏢 Desenvolvedora:</strong> ${data.desenvolvedora}</p>
-            <p><strong>🎮 Plataformas:</strong> ${data.plataformas.map(p => `<span class="inline-block bg-indigo-100 text-indigo-800 dark:bg-indigo-800 dark:text-white px-2 py-1 rounded text-sm mr-2">${p}</span>`).join('')}</p>
-            <p><strong>🏷️ Gêneros:</strong> ${data.generos.map(g => `<span class="inline-block bg-gray-200 dark:bg-gray-700 dark:text-white px-2 py-1 rounded text-sm mr-2">${g}</span>`).join('')}</p>
-            ${verMaisHTML}
-            ${data.screenshots && data.screenshots.length ? `
-              <div>
-                <h3 class="font-semibold mt-4 mb-2">📸 Screenshots:</h3>
-                <div class="grid grid-cols-2 gap-2">
-                  ${data.screenshots.map(img => `<img src="${img}" class="rounded-lg shadow hover:scale-105 transition duration-300">`).join('')}
-                </div>
-              </div>
-            ` : ''}
-            <button id="tentarOutro" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition">
-              Tentar outro
-            </button>
-          </div>
-        `;
-
-        document.getElementById('tentarOutro').addEventListener('click', () => {
-          buscarJogo();
-        });
-      }
-    }
-
-    document.getElementById('filtros').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      ultimosFiltros = formData;
-      buscarJogo(formData);
-    });
-
-    carregarFiltros();
-  </script>
 </body>
 </html>

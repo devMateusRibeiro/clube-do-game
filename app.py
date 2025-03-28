@@ -13,8 +13,12 @@ API_KEY = os.getenv('RAWG_API_KEY')
 BASE_URL = 'https://api.rawg.io/api/games'
 
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
+
+@app.route('/descobrir')
+def descobrir():
+    return render_template('descobrir.html')
 
 @app.route('/buscar', methods=['POST'])
 def buscar_jogo():
@@ -94,4 +98,3 @@ def generos():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
-
